@@ -27,8 +27,8 @@ type alias Point2d =
 generatePoint2d : Random.Generator Point2d
 generatePoint2d =
     Random.map2 (\a b -> Point2d.fromTuple Pixels.pixels ( a, b ))
-        (Random.float 0 500)
-        (Random.float 0 500)
+        (Random.float 0 600)
+        (Random.float 0 600)
 
 
 generatePoints : Cmd Msg
@@ -80,7 +80,7 @@ point2d point =
 view : Model -> Html Msg
 view points =
     div []
-        [ Svg.svg [ Attributes.width "500", Attributes.height "500" ] <|
+        [ Svg.svg [ Attributes.width "600", Attributes.height "600" ] <|
             let
                 clustered =
                     KMeans.clusterBy point2d 8 points
