@@ -6,6 +6,7 @@
 
 ## Example
 
+The usual process is to turn your data into a `List Float`, and then apply one of the clustering functions.
 ```elm
 import Iris exposing (Iris)
 import KMeans
@@ -36,4 +37,4 @@ view points =
             viewPoints clustered.clusters
         ]
 ```
-[Full example](https://github.com/folkertdev/elm-kmeans/blob/master/examples/src/Main.elm)
+The [full example](https://github.com/folkertdev/elm-kmeans/blob/master/examples/src/Main.elm) shows how to hook this up.
