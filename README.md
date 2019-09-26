@@ -36,4 +36,4 @@ view points =
             viewPoints clustered.clusters
         ]
 ```
-[Full example](link)
+[Full example](https://github.com/folkertdev/elm-kmeans/blob/master/examples/src/Main.elm)

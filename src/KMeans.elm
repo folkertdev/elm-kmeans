@@ -2,13 +2,52 @@ module KMeans exposing
     ( cluster
     , clusterBy
     , clusterExactlyBy
+    , associate
     )
 
-{-| K-means is a method for partitioning data points into at most `k` clusters.
+{-| K-means is a method for partitioning data points into `k` clusters.
+
+The standard method only guarantees at most `k` clusters: sometimes there are fewer.
+In many cases an exact `k`-clustering is desired and this usecase is also supported.
+
+
+# Cluster
 
 @docs cluster
 @docs clusterBy
 @docs clusterExactlyBy
+
+
+# Helpers
+
+@docs associate
+
+
+# Shuffling
+
+K-means is sensitive to the initial guess of the centroids.
+If two centroid points are too close, one of them often becomes empty during the clustering process, and we don't have `k` clusters any more.
+This is especially likely when the input data is sorted.
+
+The `clusterExactlyBy` function tries to solve this issue by trying `n` permutations of the list (it moves items from the front to the back, then tries clustering to see if `k` clusters emerge).
+Another method that helps is shuffling the input list. On average, the initial clusters will be distributed more evenly.
+
+In elm shuffling a list is easiest with the `elm-community/random-extra` package, that exposes a `Random.List.shuffle` function.
+
+    import KMeans
+    import Random
+    import Random.List
+
+    shuffleAndClusterBy :
+        (a -> List Float)
+        -> Int
+        -> List a
+        -> Random.Generator { centroids : List (List Float), clusters : List (List a) }
+    shuffleAndClusterBy toVector k items =
+        Random.List.shuffle items
+            |> Random.map (KMeans.clusterBy toVector k)
+
+The [guide](https://guide.elm-lang.org/effects/random.html) explains how to work with randomness and `Random.Generator`.
 
 -}
 
@@ -68,9 +107,12 @@ clusterBy toVector k items =
 {-| Try to find a clustering with exactly `k` clusters
 
 The K-means algorithm initially groups the data randomly into clusters. In some cases, this can cause a cluster to be "bumped out" and become empty.
-Therefore, normally you get at most `k` clusters. This function will retry clustering when fewer than `k` clusters are found, by shuffling the input points.
+Therefore, normally you get at most, but not always exactly, `k` clusters.
 
+This function will retry clustering when fewer than `k` clusters are found, by moving data points from the front to the back of the input.
 It will retry at most `n` times (where `n` is the number of input points).
+
+For big sorted inputs an initial full random shuffle can be helpful to decrease computation time. See the advice on shuffling below.
 
 -}
 clusterExactlyBy : (a -> List Float) -> Int -> List a -> { centroids : List (List Float), clusters : List (List a) }
@@ -100,42 +142,15 @@ clusterExactlyByHelp remaining toVector k items =
                     { centroids = [], clusters = [] }
 
 
-{-| Apply K-means clustering to a set of points with a custom conversion to cartesian coordinates
 
-    myValues : List (Float, Float)
+-- GENERATORS
 
-    KMeans.tuple2d 5 myValues
 
-Will partition `myValues` into at most 5 clusters.
-
+{-| Associate a centroid with its points.
 -}
-generic : (a -> List Float) -> Int -> List a -> List (List a)
-generic toVector k points =
-    points
-        |> List.map (\x -> { vector = toVector x, value = x })
-        |> kmeansHelp k
-        |> .clusters
-        |> List.map (List.map .value)
-
-
-tuple2d : Int -> List ( Float, Float ) -> List (List ( Float, Float ))
-tuple2d =
-    generic (\( x, y ) -> [ x, y ])
-
-
-tuple3d : Int -> List ( Float, Float, Float ) -> List (List ( Float, Float, Float ))
-tuple3d =
-    generic (\( x, y, z ) -> [ x, y, z ])
-
-
-record2d : Int -> List { x : Float, y : Float } -> List (List { x : Float, y : Float })
-record2d =
-    generic (\{ x, y } -> [ x, y ])
-
-
-record3d : Int -> List { x : Float, y : Float, z : Float } -> List (List { x : Float, y : Float, z : Float })
-record3d =
-    generic (\{ x, y, z } -> [ x, y, z ])
+associate : { centroids : List (List Float), clusters : List (List a) } -> List { centroid : List Float, points : List a }
+associate items =
+    List.map2 (\center points -> { centroid = center, points = points }) items.centroids items.clusters
 
 
 type alias Vector =
@@ -320,4 +335,3 @@ greedyGroupsOfHelp n items stack itemsOnStack accum =
 
             else
                 greedyGroupsOfHelp n rest [ first ] 1 (stack :: accum)
-
