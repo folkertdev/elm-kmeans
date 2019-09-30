@@ -76,13 +76,13 @@ This function offers more flexibility in the type of coordinate you have: Just t
 
 Or using `ianmackenzie/elm-geometry` and `ianmackenzie/elm-units`
 
-    point2d : Point2d Pixels Float -> List Float
+    point2d : Point2d Pixels coordinates -> List Float
     point2d point =
         let
-            ( a, b ) =
-                Point2d.toTuple Pixels.inPixels point
+            { x, y } =
+                Point2d.toPixels point
         in
-        [ a, b ]
+        [ x, y ]
 
     myPoint2ds : List (Point2d Pixels Float)
 
